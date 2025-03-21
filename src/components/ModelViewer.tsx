@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber'
 import { Environment, OrbitControls, PerspectiveCamera, useProgress } from '@react-three/drei'
 import CarModel from './CarModel'
 
-// Loading indicator for the 3D model
+// Loading indicator for the 3D model - this is rendered outside the Canvas
 function Loader() {
   const { progress } = useProgress()
   return (
@@ -16,7 +16,7 @@ function Loader() {
   )
 }
 
-// Fallback shape in case no model is provided
+// Fallback shape in case no model is provided - this is part of the 3D scene
 function FallbackCar() {
   return (
     <mesh>
@@ -26,38 +26,49 @@ function FallbackCar() {
   )
 }
 
+// Scene components that will be rendered inside the Canvas
+function Scene({ modelPath }: { modelPath: string }) {
+  return (
+    <>
+      <PerspectiveCamera makeDefault position={[3, 2, 5]} fov={50} />
+      <ambientLight intensity={0.5} />
+      <spotLight 
+        position={[10, 10, 10]} 
+        angle={0.15} 
+        penumbra={1} 
+        intensity={1} 
+        castShadow 
+      />
+      <pointLight position={[-10, -10, -10]} intensity={0.5} />
+      
+      {modelPath ? (
+        <CarModel path={modelPath} scale={1.5} />
+      ) : (
+        <FallbackCar />
+      )}
+      <Environment preset="sunset" />
+      
+      <OrbitControls 
+        enablePan={true}
+        enableZoom={true}
+        enableRotate={true}
+        minDistance={2}
+        maxDistance={10}
+      />
+    </>
+  )
+}
+
 export default function ModelViewer({ modelPath = '' }) {
   return (
-    <div className="w-full h-full min-h-[500px]">
+    <div className="w-full h-full min-h-[500px] relative">
       <Canvas shadows>
-        <PerspectiveCamera makeDefault position={[3, 2, 5]} fov={50} />
-        <ambientLight intensity={0.5} />
-        <spotLight 
-          position={[10, 10, 10]} 
-          angle={0.15} 
-          penumbra={1} 
-          intensity={1} 
-          castShadow 
-        />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} />
-        
-        <Suspense fallback={<Loader />}>
-          {modelPath ? (
-            <CarModel path={modelPath} scale={1.5} />
-          ) : (
-            <FallbackCar />
-          )}
-          <Environment preset="sunset" />
+        <Suspense fallback={null}>
+          <Scene modelPath={modelPath} />
         </Suspense>
-        
-        <OrbitControls 
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={2}
-          maxDistance={10}
-        />
       </Canvas>
+      {/* Loader is outside the Canvas */}
+      <Loader />
     </div>
   )
 }
